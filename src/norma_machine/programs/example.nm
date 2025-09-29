@@ -1,0 +1,3 @@
+1: add(a) goto 2
+2: sum(a,b) goto 3
+3: sub(a) goto 9

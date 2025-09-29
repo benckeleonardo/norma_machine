@@ -1,0 +1,6 @@
+multiply(a,b,aux)
+1: clear(aux) goto 2
+2: if zero(b) goto 9 else goto 3
+3: sub(b) goto 4
+4: copy(a,aux) goto 5
+5: add(a,aux) goto 2

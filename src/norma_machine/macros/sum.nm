@@ -1,0 +1,5 @@
+# Add the value of register b to a. The value of b is not preserved.
+sum(a,b)
+1: if zero(b) goto 9 else goto 2
+2: add(a) goto 3
+3: sub(b) goto 1
