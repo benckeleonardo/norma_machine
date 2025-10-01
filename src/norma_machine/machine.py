@@ -1,5 +1,6 @@
 import string
 
+
 class Machine:
     def __init__(self, num_registers, program, macros):
         # inicializa registradores (a, b, c, ...) com 0
@@ -16,7 +17,7 @@ class Machine:
             if not self.stack:
                 instr_set = self.program
                 pc_key = pc
-                context = str(pc)
+                context = f"{pc}"
                 param_map = None
             else:
                 top = self.stack[-1]
@@ -30,9 +31,16 @@ class Machine:
                 if self.stack:
                     # finaliza macro
                     finished = self.stack.pop()
-                    caller_pc = finished['caller_pc']
-                    print(f"({caller_pc}, {format_registers(self.registers)}) Finalizou a macro {finished['macro'].name}({', '.join(finished['param_map'].values())}) e desviou para {finished['return_pc']}")
-                    pc = finished['return_pc']
+                    print(
+                        f"({finished['caller_context']}, {format_registers(self.registers)}) "
+                        f"Finalizou a macro {finished['macro'].name}({', '.join(finished['param_map'].values())}) "
+                        f"e desviou para {finished['return_pc']}"
+                    )
+                    # volta para o rótulo de retorno
+                    if self.stack:
+                        self.stack[-1]['pc'] = finished['return_pc']
+                    else:
+                        pc = finished['return_pc']
                     continue
                 else:
                     print(f"({pc}, {format_registers(self.registers)}) Execução finalizada")
@@ -46,10 +54,16 @@ class Machine:
                 reg = action[1]
                 real_reg = param_map[reg] if param_map else reg
                 if self.registers[real_reg] == 0:
-                    print(f"({context}, {format_registers(self.registers)}) Como {reg} == 0 desviou para {instr.goto_true}")
+                    print(
+                        f"({context}, {format_registers(self.registers)}) "
+                        f"Como {reg} == 0 desviou para {instr.goto_true}"
+                    )
                     next_pc = instr.goto_true
                 else:
-                    print(f"({context}, {format_registers(self.registers)}) Como {reg} <> 0 desviou para {instr.goto_false}")
+                    print(
+                        f"({context}, {format_registers(self.registers)}) "
+                        f"Como {reg} <> 0 desviou para {instr.goto_false}"
+                    )
                     next_pc = instr.goto_false
 
             else:
@@ -58,12 +72,18 @@ class Machine:
                 real_args = [param_map[a] if param_map else a for a in args]
 
                 if name == "add":
-                    print(f"({context}, {format_registers(self.registers)}) Adicionou no registrador {real_args[0]} e desviou para {instr.goto_true}")
+                    print(
+                        f"({context}, {format_registers(self.registers)}) "
+                        f"Adicionou no registrador {real_args[0]} e desviou para {instr.goto_true}"
+                    )
                     self.registers[real_args[0]] += 1
                     next_pc = instr.goto_true
 
                 elif name == "sub":
-                    print(f"({context}, {format_registers(self.registers)}) Subtraiu do registrador {real_args[0]} e desviou para {instr.goto_true}")
+                    print(
+                        f"({context}, {format_registers(self.registers)}) "
+                        f"Subtraiu do registrador {real_args[0]} e desviou para {instr.goto_true}"
+                    )
                     self.registers[real_args[0]] -= 1
                     next_pc = instr.goto_true
 
@@ -77,9 +97,12 @@ class Machine:
                         'param_map': dict(zip(macro.params, real_args)),
                         'return_pc': instr.goto_true,
                         'pc': 1,
-                        'caller_pc': pc  # guarda rótulo do programa principal que chamou a macro
+                        'caller_context': context  # <- guarda o contexto atual (main:2, teste:2, etc.)
                     })
-                    print(f"({context}, {format_registers(self.registers)}) Iniciou a macro {name}({', '.join(real_args)})")
+                    print(
+                        f"({context}, {format_registers(self.registers)}) "
+                        f"Iniciou a macro {name}({', '.join(real_args)})"
+                    )
                     next_pc = 1  # inicia macro no rótulo 1
                 else:
                     raise ValueError(f"Instrução desconhecida: {name}")
@@ -90,9 +113,8 @@ class Machine:
             else:
                 pc = next_pc
 
-
 def format_registers(registers):
-    """Formata os registradores sem vírgula extra quando só existe 1 valor"""
+    """Formata os registradores de forma amigável."""
     vals = list(registers.values())
     if len(vals) == 1:
         return f"({vals[0]})"
